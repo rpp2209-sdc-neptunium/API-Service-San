@@ -1,0 +1,22 @@
+{
+  "name": "overview-api-service-san",
+  "version": "1.0.0",
+  "description": "RPP2209-sdc-neptunium-SanChui-API-Service-Repo",
+  "main": "index.js",
+  "scripts": {
+    "server-dev": "npx nodemon --watch server server/index.js",
+    "build": "npx webpack",
+    "start": "node server/index.js",
+    "test": "jest --watchAll --verbose"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rpp2209-sdc-neptunium/Overview-API-Service-San.git"
+  },
+  "author": "San Chui",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rpp2209-sdc-neptunium/Overview-API-Service-San/issues"
+  },
+  "homepage": "https://github.com/rpp2209-sdc-neptunium/Overview-API-Service-San#readme"
+}
