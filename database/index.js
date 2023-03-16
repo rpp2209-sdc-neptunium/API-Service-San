@@ -55,6 +55,8 @@ let csvPhotosSchema = mongoose.Schema({
 
 
 
+/****************************/
+
 // Final Schema Design
 let featuresSchema = mongoose.Schema({
   feature: String,
@@ -62,23 +64,35 @@ let featuresSchema = mongoose.Schema({
 });
 
 let photosSchema = mongoose.Schema({
-  url: String,
-  thumbnail_url: String
+  thumbnail_url: String,
+  url: String
 });
 
 let skusSchema = mongoose.Schema({
   id: Number,
-  size: String,
-  quantity: Number
+  quantity: Number,
+  size: String
 });
 
 let stylesSchema = mongoose.Schema({
+  style_id: Number,
+  name: String,
+  original_price: String,
+  sale_price: String,
+  default: Boolean,
+  photos: [photosSchema],
+  skus: [skusSchema]
+});
+
+let productsSchema = mongoose.Schema({
   id: Number,
   name: String,
-  sale_price: String,
-  original_price: String,
-  default_style: String,
-  photos: [photosSchema],
+  slogan: String,
+  description: String,
+  category: String,
+  default_price: String,
+  features: [featuresSchema],
+  related:[Number]
 });
 
 
@@ -88,6 +102,7 @@ let CSVFeatures = mongoose.model('Features', csvFeaturesSchema);
 let CSVStyles = mongoose.model('Styles', csvStylesSchema);
 let CSVSkus = mongoose.model('Skus', csvSkusSchema);
 let CSVPhotos = mongoose.model('Photos', csvPhotosSchema);
+let finalProducts = mongoose.model('Final', productsSchema);
 
 
 // let save = (word) => {
@@ -116,6 +131,43 @@ let CSVPhotos = mongoose.model('Photos', csvPhotosSchema);
 //   );
 // }
 
+let productBy = () => {
+  return CSVProduct.find()
+    .limit(2)
+    .sort({id: 1})
+    .exec();
+};
+
+let featuresBy = (query) => {
+  return CSVFeatures.find({"product_id": query}, { '_id': 0, 'id': 0, 'product_id': 0, '__v': 0})
+  .sort({id: 1})
+  .exec();
+}
+
+let photosBy = (query) => {
+  return CSVPhotos.find({"styleId": query},  { '_id': 0, 'id': 0, 'styleId': 0, '__v': 0})
+  .sort({id: 1})
+  .exec();
+}
+
+let skusBy = (query) => {
+  return CSVSkus.find({"styleId": query}, { '_id': 0, 'styleId': 0, '__v': 0})
+  .sort({id: 1})
+  .exec();
+}
+
+let stylesBy = (query) => {
+  return CSVStyles.find({"product_id": query}, { '_id': 0, 'product_id': 0, '__v': 0})//{"product_id": query}
+  .sort({id: 1})
+  .exec();
+}
+
+let relatedBy = (query) => {
+  return CSVRelated.find({"current_product_id": query}, { '_id': 0, 'current_product_id': 0, 'id': 0, '__v': 0})
+  .sort({id: 1})
+  .exec();
+}
+
 // let find = (query, page) => {
 //   return Word.find({ "word" : { $regex: query, $options: 'i' }}, null, { skip: page })
 //     .limit(10)
@@ -139,3 +191,10 @@ module.exports.CSVFeatures = CSVFeatures;
 module.exports.CSVStyles = CSVStyles;
 module.exports.CSVSkus = CSVSkus;
 module.exports.CSVPhotos = CSVPhotos;
+module.exports.productBy = productBy;
+module.exports.featuresBy = featuresBy;
+module.exports.photosBy = photosBy;
+module.exports.skusBy = skusBy;
+module.exports.stylesBy = stylesBy;
+module.exports.relatedBy = relatedBy;
+module.exports.finalProducts = finalProducts;

@@ -27,7 +27,7 @@ app.use(bodyParser.json());
 
 app.get('/product', (req, res) => {
   let findAll = (query, page) => {
-    return db.CSVProduct.find()
+    return db.CSVProduct.find({})
       .limit(5)
       .exec();
   };
@@ -92,8 +92,7 @@ app.get('/styles', (req, res) => {
   };
   findAll()
     .then((obj) => {
-      console.log(1958102);
-      console.log(obj.length);
+      console.log(obj);
       res.status(200).send(obj);
     })
     .catch((err) => {
@@ -122,6 +121,20 @@ app.get('/skus', (req, res) => {
 
 app.delete('/skus', (req, res) => {
   db.CSVSkus.deleteMany({})
+  .then(function(){
+    res.status(200).send({
+        message: "Successfully Deleted!"
+    });
+  }).catch(function(error){
+    res.status(500).send({
+        message: "failure",
+        error
+    });
+  });
+})
+
+app.delete('/styles', (req, res) => {
+  db.CSVStyles.deleteMany({})
   .then(function(){
     res.status(200).send({
         message: "Successfully Deleted!"
@@ -352,7 +365,7 @@ app.post('/styles', (req, res) => {
           console.log(jsonObj.length, i);
             var obj={};
             obj.id=jsonObj[i]['id'];
-            obj.productId=jsonObj[i]['productId'];
+            obj.product_id=jsonObj[i]['productId'];
             obj.name=jsonObj[i]['name'];
             obj.sale_price=jsonObj[i]['sale_price'];
             obj.original_price=jsonObj[i]['original_price'];
@@ -375,6 +388,120 @@ app.post('/styles', (req, res) => {
             error
         });
     })
+})
+
+/**********Transformation**********/
+
+app.get('/transform', (req, res) => {
+  let findAll = (query, page) => {
+    return db.finalProducts.find()
+      .exec();
+  };
+  findAll()
+    .then((obj) => {
+      res.status(200).send(obj);
+    })
+    .catch((err) => {
+      res.status(401).send(err);
+    })
+})
+
+app.delete('/transform', (req, res) => {
+  db.finalProducts.deleteMany({})
+  .then(function(){
+    res.status(200).send({
+        message: "Successfully Deleted!"
+    });
+  }).catch(function(error){
+    res.status(500).send({
+        message: "failure",
+        error
+    });
+  });
+})
+
+app.post('/transform', (req, res) => {
+  db.productBy()
+    .then((products) => {
+      var army = [];
+      products.forEach((product) => {
+        var obj = {};
+        obj.id = product.id;
+        obj.name = product.name;
+        obj.slogan = product.slogan;
+        obj.description = product.description;
+        obj.category = product.category;
+        obj.default_price = product.default_price;
+
+        army.push(obj);
+      });
+      return army;
+    })
+    .then((army) => {
+      army.forEach((obj) => {
+        var product_id = product.id;
+        db.featuresBy(product_id)
+          .then((features) => {
+            obj.features = features;
+          })
+      });
+      return army;
+    })
+    .then((army) => {
+      army.forEach((obj) => {
+        var product_id = product.id;
+        db.relatedBy(product_id)
+          .then((related) => {
+            var relatarr = [];
+            related.forEach((eachId) => {
+              relatarr.push(eachId.related_product_id);
+            })
+            obj.related = relatarr;
+          })
+      });
+      return army;
+    })
+    .then((army) => {
+      console.log(army);
+      db.finalProducts.insertMany(army).then(function(){
+        res.status(200).send({
+            message: "Successfully Uploaded!"
+        });
+      }).catch(function(error){
+        res.status(500).send({
+            message: "failure",
+            error
+        });
+      });
+    })
+
+
+      // console.log(army);
+/*
+      .then((data) => {
+
+      })
+      .catch((error) => {
+        res.status(500).send({
+          message: "failure",
+          error
+        });
+      });
+*/
+      // db.finalProducts.insertMany(army).then(function(){
+      //   res.status(200).send({
+      //       message: "Successfully Uploaded!"
+      //   });
+      // }).catch(function(error){
+      //   res.status(500).send({
+      //       message: "failure",
+      //       error
+      //   });
+      // });
+    .catch((error) => {
+      res.status(500).send(error);
+    });
+
 })
 
 var port = process.env.PORT || 3000;
