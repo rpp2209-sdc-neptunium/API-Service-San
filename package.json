@@ -4,7 +4,7 @@
   "description": "RPP2209-sdc-neptunium-SanChui-API-Service-Repo",
   "main": "index.js",
   "scripts": {
-    "server-dev": "npx nodemon --watch server server/index.js",
+    "db-dev": "npx nodemon --watch server server/database/index.js",
     "build": "npx webpack",
     "start": "node server/index.js",
     "test": "jest --watchAll --verbose"
@@ -20,8 +20,12 @@
   },
   "homepage": "https://github.com/rpp2209-sdc-neptunium/Overview-API-Service-San#readme",
   "dependencies": {
+    "body-parser": "^1.20.2",
+    "csvtojson": "^2.0.10",
     "express": "^4.18.2",
     "jest": "^29.4.3",
-    "mongoose": "^7.0.0"
+    "mongoose": "^7.0.0",
+    "multer": "^1.4.5-lts.1",
+    "path": "^0.12.7"
   }
 }

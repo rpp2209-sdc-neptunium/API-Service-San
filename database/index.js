@@ -1,5 +1,5 @@
 require("dotenv").config();
-const mongoose = require("    ` ");
+const mongoose = require('mongoose');
 mongoose.connect(`mongodb://localhost/${process.env.DB_NAME}`);
 
 //id,name,slogan,description,category,default_price
@@ -55,8 +55,6 @@ let csvPhotosSchema = mongoose.Schema({
 
 
 
-
-
 // Final Schema Design
 let featuresSchema = mongoose.Schema({
   feature: String,
@@ -69,7 +67,7 @@ let photosSchema = mongoose.Schema({
 });
 
 let skusSchema = mongoose.Schema({
-  id: Number
+  id: Number,
   size: String,
   quantity: Number
 });
@@ -135,8 +133,9 @@ let CSVPhotos = mongoose.model('Photos', csvPhotosSchema);
 //     .exec();
 // };
 
-module.exports.save = save;
-module.exports.find = find;
-module.exports.edit = edit;
-module.exports.deleteOne = deleteOne;
-module.exports.findAll = findAll;
+module.exports.CSVProduct = CSVProduct;
+module.exports.CSVRelated = CSVRelated;
+module.exports.CSVFeatures = CSVFeatures;
+module.exports.CSVStyles = CSVStyles;
+module.exports.CSVSkus = CSVSkus;
+module.exports.CSVPhotos = CSVPhotos;
