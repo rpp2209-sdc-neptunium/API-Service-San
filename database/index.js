@@ -9,7 +9,7 @@ let csvProductSchema = mongoose.Schema({
   slogan: String,
   description: String,
   category: String,
-  default_price: Number
+  default_price: String
 });
 
 //id,current_product_id,related_product_id
@@ -34,7 +34,8 @@ let csvStylesSchema = mongoose.Schema({
   name: String,
   sale_price: String,
   original_price: String,
-  default_style: String
+  default_style: String,
+
 });
 
 //id,styleId,size,quantity
@@ -103,33 +104,8 @@ let CSVStyles = mongoose.model('Styles', csvStylesSchema);
 let CSVSkus = mongoose.model('Skus', csvSkusSchema);
 let CSVPhotos = mongoose.model('Photos', csvPhotosSchema);
 let finalProducts = mongoose.model('Final', productsSchema);
+let finalStyles = mongoose.model('finalStyles', stylesSchema);
 
-
-// let save = (word) => {
-//   return Word.findOneAndUpdate(
-//     {word: word.word},
-//     {
-//       word: word.word,
-//       definition: word.definition
-//     },
-//     {
-//       new: true,
-//       upsert: true }
-//   );
-// }
-
-// let edit = (word) => {
-//   return Word.findOneAndUpdate(
-//     {_id: word._id},
-//     {
-//       word: word.word,
-//       definition: word.definition
-//     },
-//     {
-//       new: true,
-//       upsert: true }
-//   );
-// }
 
 let productBy = () => {
   return CSVProduct.find()
@@ -168,22 +144,61 @@ let relatedBy = (query) => {
   .exec();
 }
 
-// let find = (query, page) => {
-//   return Word.find({ "word" : { $regex: query, $options: 'i' }}, null, { skip: page })
-//     .limit(10)
-//     .sort( {date: -1})
-//     .exec();
-// };
 
-// let deleteOne = (id) => {
-//   return Word.deleteOne({_id: id._id});
-// }
+/**********API Helper Functions*****************/
+// List Products
 
-// let findAll = (query, page) => {
-//   return Word.find()
-//     .sort( {date: -1})
-//     .exec();
-// };
+let listProducts = (page = 1, count = 5) => {
+  return CSVProduct.find({}, { '_id': 0, '__v': 0})
+    .skip((page - 1) * count)
+    .limit(count)
+    .sort({id: 1})
+    .exec();
+};
+
+let relatedProducts = (query) => {
+  return CSVRelated.find({"current_product_id": query}, { '_id': 0, 'current_product_id': 0, 'id': 0, '__v': 0})
+  .exec();
+}
+
+let stylesProducts = (query) => {
+  let  aggregate = CSVStyles.aggregate()
+  .match({ id: query})
+  .lookup({
+    from: "photos",
+    localField: "id",
+    foreignField: "styleId",
+    as: "photos",
+  })
+  .lookup({
+    from: "skus",
+    localField: "id",
+    foreignField: "styleId",
+    as: "skus",
+  })
+  .project({
+    _id: 0,
+    id: 1,
+    product_id: 1,
+    name: 1,
+    sale_price: 1,
+    original_price: 1,
+    default_style: 1,
+    "photos.url": 1,
+    "photos.thumbnail_url": 1,
+    "skus.id": 1,
+    "skus.size": 1,
+    "skus.quantity": 1,
+  });
+  return aggregate;
+}
+
+let informationProducts = (query) => {
+  return CSVProduct.findOne({id: query}, { '_id': 0, '__v': 0})
+  .sort({id: 1})
+  .exec();
+}
+
 
 module.exports.CSVProduct = CSVProduct;
 module.exports.CSVRelated = CSVRelated;
@@ -191,6 +206,7 @@ module.exports.CSVFeatures = CSVFeatures;
 module.exports.CSVStyles = CSVStyles;
 module.exports.CSVSkus = CSVSkus;
 module.exports.CSVPhotos = CSVPhotos;
+
 module.exports.productBy = productBy;
 module.exports.featuresBy = featuresBy;
 module.exports.photosBy = photosBy;
@@ -198,3 +214,9 @@ module.exports.skusBy = skusBy;
 module.exports.stylesBy = stylesBy;
 module.exports.relatedBy = relatedBy;
 module.exports.finalProducts = finalProducts;
+
+module.exports.listProducts = listProducts;
+module.exports.relatedProducts = relatedProducts;
+module.exports.stylesProducts = stylesProducts;
+module.exports.informationProducts = informationProducts;
+

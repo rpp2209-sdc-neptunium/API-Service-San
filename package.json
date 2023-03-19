@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "db-dev": "npx nodemon --watch server server/database/index.js",
+    "server-dev": "npx nodemon --watch server server/index.js",
     "build": "npx webpack",
     "start": "node server/index.js",
     "test": "jest --watchAll --verbose"

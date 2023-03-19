@@ -421,85 +421,38 @@ app.delete('/transform', (req, res) => {
 })
 
 app.post('/transform', (req, res) => {
-  db.productBy()
-    .then((products) => {
-      var army = [];
-      products.forEach((product) => {
-        var obj = {};
-        obj.id = product.id;
-        obj.name = product.name;
-        obj.slogan = product.slogan;
-        obj.description = product.description;
-        obj.category = product.category;
-        obj.default_price = product.default_price;
+  let processS = () => {
+    return db.CSVStyles.aggregate([{$lookup: {
+      from: "photos",
+      localField: "id",
+      foreignField: "styleId",
+      as: "photos",
+    },
+  },
+    {
+    $project:
+    {
+      id: 1,
+      product_id: 1,
+      name: 1,
+      sale_price: 1,
+      original_price: 1,
+      default_style: 1,
+      "photos.url": 1,
+      "photos.thumbnail_url": 1
+    },
+    }
+    ]);
+  };
 
-        army.push(obj);
-      });
-      return army;
+  processS()
+    .then((data) => {
+      console.log(data.length);
+      console.log(data[0]);
+      res.status(200).send();
     })
-    .then((army) => {
-      army.forEach((obj) => {
-        var product_id = product.id;
-        db.featuresBy(product_id)
-          .then((features) => {
-            obj.features = features;
-          })
-      });
-      return army;
-    })
-    .then((army) => {
-      army.forEach((obj) => {
-        var product_id = product.id;
-        db.relatedBy(product_id)
-          .then((related) => {
-            var relatarr = [];
-            related.forEach((eachId) => {
-              relatarr.push(eachId.related_product_id);
-            })
-            obj.related = relatarr;
-          })
-      });
-      return army;
-    })
-    .then((army) => {
-      console.log(army);
-      db.finalProducts.insertMany(army).then(function(){
-        res.status(200).send({
-            message: "Successfully Uploaded!"
-        });
-      }).catch(function(error){
-        res.status(500).send({
-            message: "failure",
-            error
-        });
-      });
-    })
-
-
-      // console.log(army);
-/*
-      .then((data) => {
-
-      })
-      .catch((error) => {
-        res.status(500).send({
-          message: "failure",
-          error
-        });
-      });
-*/
-      // db.finalProducts.insertMany(army).then(function(){
-      //   res.status(200).send({
-      //       message: "Successfully Uploaded!"
-      //   });
-      // }).catch(function(error){
-      //   res.status(500).send({
-      //       message: "failure",
-      //       error
-      //   });
-      // });
-    .catch((error) => {
-      res.status(500).send(error);
+    .catch((err) => {
+      res.status(401).send(err);
     });
 
 })
