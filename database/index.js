@@ -153,69 +153,30 @@ let relatedBy = (query) => {
 
 /**********API Helper Functions*****************/
 // List Products
-
-let listProducts = (page = 1, count = 5) => {
-  return CSVProduct.find({}, { '_id': 0, '__v': 0})
+let list = (page = 1, count = 5) => {
+  return finalProducts.find({}, { '_id': 0, '__v': 0, 'styles': 0, 'related': 0, 'features': 0})
     .skip((page - 1) * count)
     .limit(count)
     .sort({id: 1})
     .exec();
 };
-
-let relatedProducts = (query) => {
-  return CSVRelated.find({"current_product_id": query}, { '_id': 0, 'current_product_id': 0, 'id': 0, '__v': 0})
-  .exec();
+// Product Information
+let information = (id) => {
+  return finalProducts.findOne({id: id}, { '_id': 0, '__v': 0, 'styles': 0, 'related': 0, 'features._id': 0})
+    .exec();
 }
-
-let stylesProducts = (query) => {
-  let  aggregate = CSVStyles.aggregate()
-  .match({ id: query})
-  .lookup({
-    from: "photos",
-    localField: "id",
-    foreignField: "styleId",
-    as: "photos",
-  })
-  .lookup({
-    from: "skus",
-    localField: "id",
-    foreignField: "styleId",
-    as: "skus",
-  })
-  .project({
-    _id: 0,
-    id: 1,
-    product_id: 1,
-    name: 1,
-    sale_price: 1,
-    original_price: 1,
-    default_style: 1,
-    "photos.url": 1,
-    "photos.thumbnail_url": 1,
-    "skus.id": 1,
-    "skus.size": 1,
-    "skus.quantity": 1,
-  });
-  return aggregate;
+// Product Styles
+let styles = (id) => {
+  return finalProducts.findOne({id: id}, { '_id': 0, '__v': 0, 'styles._id': 0, 'related': 0, 'features': 0,
+  'name' : 0, 'slogan' : 0, 'description' : 0, 'category' : 0, 'default_price' : 0, 'styles.photos._id': 0})
+    .exec();
 }
-
-let informationProducts = (query) => {
-  return CSVProduct.findOne({id: query}, { '_id': 0, '__v': 0})
-  .sort({id: 1})
-  .exec();
+// Product Related
+let related = (id) => {
+  return finalProducts.findOne({id: id}, { '_id': 0, '__v': 0, 'styles': 0, 'features': 0,
+  'name' : 0, 'slogan' : 0, 'description' : 0, 'category' : 0, 'default_price' : 0})
+    .exec();
 }
-
-let updateRelated = (id, related) => {
-  return finalProducts.updateOne(
-    {id: id},
-    {
-      $set: {related: related}
-    },
-    {
-      upsert: true }
-  );
-}
-
 
 module.exports.CSVProduct = CSVProduct;
 module.exports.CSVRelated = CSVRelated;
@@ -233,9 +194,8 @@ module.exports.relatedBy = relatedBy;
 module.exports.finalProducts = finalProducts;
 module.exports.finalStyles = finalStyles;
 
-module.exports.listProducts = listProducts;
-module.exports.relatedProducts = relatedProducts;
-module.exports.stylesProducts = stylesProducts;
-module.exports.informationProducts = informationProducts;
-module.exports.updateRelated = updateRelated;
+module.exports.list = list;
+module.exports.related = related;
+module.exports.styles = styles;
+module.exports.information = information;
 
