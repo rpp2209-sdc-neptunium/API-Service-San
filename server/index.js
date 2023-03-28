@@ -59,3 +59,5 @@ app.listen(port, err => {
       throw err
   console.log(`listening on port ${port}`);
 });
+
+module.exports = app;
