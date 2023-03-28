@@ -29,12 +29,12 @@ let csvFeaturesSchema = mongoose.Schema({
 
 //id,productId,name,sale_price,original_price,default_style
 let csvStylesSchema = mongoose.Schema({
-  id: Number,
-  product_id: Number,
-  name: String,
-  sale_price: String,
-  original_price: String,
-  default_style: String,
+  "style_id": Number,
+  "productId": Number,
+  "name": String,
+  "sale_price": String,
+  "original_price": String,
+  "default?": Number,
 
 });
 
@@ -55,7 +55,6 @@ let csvPhotosSchema = mongoose.Schema({
 });
 
 
-
 /****************************/
 
 // Final Schema Design
@@ -69,6 +68,11 @@ let photosSchema = mongoose.Schema({
   url: String
 });
 
+let finalPhotosSchema = mongoose.Schema({
+  styleId: Number,
+  photos: [photosSchema]
+});
+
 let skusSchema = mongoose.Schema({
   id: Number,
   quantity: Number,
@@ -80,9 +84,9 @@ let stylesSchema = mongoose.Schema({
   name: String,
   original_price: String,
   sale_price: String,
-  default: Boolean,
+  'default?': Boolean,
   photos: [photosSchema],
-  skus: [skusSchema]
+  skus: Object
 });
 
 let productsSchema = mongoose.Schema({
@@ -93,7 +97,8 @@ let productsSchema = mongoose.Schema({
   category: String,
   default_price: String,
   features: [featuresSchema],
-  related:[Number]
+  styles:[stylesSchema],
+  related: [Number]
 });
 
 
@@ -105,6 +110,7 @@ let CSVSkus = mongoose.model('Skus', csvSkusSchema);
 let CSVPhotos = mongoose.model('Photos', csvPhotosSchema);
 let finalProducts = mongoose.model('Final', productsSchema);
 let finalStyles = mongoose.model('finalStyles', stylesSchema);
+let finalPhotos = mongoose.model('finalPhotos', finalPhotosSchema);
 
 
 let productBy = () => {
@@ -199,6 +205,17 @@ let informationProducts = (query) => {
   .exec();
 }
 
+let updateRelated = (id, related) => {
+  return finalProducts.updateOne(
+    {id: id},
+    {
+      $set: {related: related}
+    },
+    {
+      upsert: true }
+  );
+}
+
 
 module.exports.CSVProduct = CSVProduct;
 module.exports.CSVRelated = CSVRelated;
@@ -214,9 +231,11 @@ module.exports.skusBy = skusBy;
 module.exports.stylesBy = stylesBy;
 module.exports.relatedBy = relatedBy;
 module.exports.finalProducts = finalProducts;
+module.exports.finalStyles = finalStyles;
 
 module.exports.listProducts = listProducts;
 module.exports.relatedProducts = relatedProducts;
 module.exports.stylesProducts = stylesProducts;
 module.exports.informationProducts = informationProducts;
+module.exports.updateRelated = updateRelated;
 

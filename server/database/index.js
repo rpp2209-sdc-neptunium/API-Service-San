@@ -6,6 +6,8 @@ var path = require('path')
 var bodyParser = require('body-parser')
 var csv = require('csvtojson')
 var db = require('../../database/index.js');
+var Promise = require('bluebird');
+var PromisePool = require('es6-promise-pool')
 
 // var storage = multer.diskStorage({
 //   destination: (req, file, cb) => {
@@ -392,21 +394,21 @@ app.post('/styles', (req, res) => {
 
 /**********Transformation**********/
 
-app.get('/transform', (req, res) => {
-  let findAll = (query, page) => {
-    return db.finalProducts.find()
-      .exec();
-  };
-  findAll()
-    .then((obj) => {
-      res.status(200).send(obj);
+app.get('/transform/all', (req, res) => {
+  db.finalProducts
+    .find()
+    .limit(1)
+    .exec()
+    .then((data) => {
+      res.status(200).send(data);
     })
     .catch((err) => {
       res.status(401).send(err);
-    })
+    });
+
 })
 
-app.delete('/transform', (req, res) => {
+app.delete('/transform/all', (req, res) => {
   db.finalProducts.deleteMany({})
   .then(function(){
     res.status(200).send({
@@ -420,41 +422,140 @@ app.delete('/transform', (req, res) => {
   });
 })
 
-app.post('/transform', (req, res) => {
-  let processS = () => {
-    return db.CSVStyles.aggregate([{$lookup: {
-      from: "photos",
-      localField: "id",
-      foreignField: "styleId",
-      as: "photos",
-    },
-  },
-    {
-    $project:
-    {
-      id: 1,
-      product_id: 1,
-      name: 1,
-      sale_price: 1,
-      original_price: 1,
-      default_style: 1,
-      "photos.url": 1,
-      "photos.thumbnail_url": 1
-    },
-    }
+app.post('/transform/related', async (req, res) => {
+  const army = [];
+  for (var i = 452701; i <= 1000011; i ++) {
+    console.clear();
+    console.log(`now: ${i} / 1000011`);
+    const transRelated = await db.CSVRelated.aggregate([
+      { $match: {current_product_id : i}},
+      { $sort: {id: 1}},
+      { $project: { '_id': 0, 'id': 0, 'current_product_id': 0, '__v': 0}},
     ]);
-  };
-
-  processS()
-    .then((data) => {
-      console.log(data.length);
-      console.log(data[0]);
-      res.status(200).send();
-    })
-    .catch((err) => {
-      res.status(401).send(err);
+      await Promise.all([transRelated]).then(async (data) => {
+        const related = [];
+        for (var j = 0; j < data[0].length; j ++) {
+          related.push(data[0][j].related_product_id);
+        }
+        var obj = {};
+        obj.id = i;
+        obj.related = related;
+        army.push(obj);
+      });
+  }
+  for (var i = 0; i < army.length; i ++) {
+    const updateRelated = await db.finalProducts.findOneAndUpdate(
+      {id: army[i].id},
+      {related: army[i].related},
+      {
+        upsert: true }
+    )
+    .then(() => {
+      console.clear();
+      console.log(`update: ${army[i].id} / 1000011`);
     });
+  }
 
+  res.sendStatus(200);
+})
+
+
+/**************************** */
+app.post('/transform/all', async (req, res) => {
+  //1000011
+  for (var i = 1; i <= 1000011; i ++) {
+    const transProduct = await db.CSVProduct.aggregate([
+      { $match: {id : i}},
+      { $project: { '_id': 0, '__v': 0}},
+    ]);
+    const transFeatures = await db.CSVFeatures.aggregate([
+      { $match: {product_id : i}},
+      { $sort: {id: 1}},
+      { $project: { '_id': 0, 'id': 0, 'product_id': 0, '__v': 0}},
+    ]);
+    const transStyles = await db.CSVStyles.aggregate([
+      { $match: {productId : i}},
+      { $sort: {style_id: 1}},
+      { $project: { '_id': 0, 'productId': 0}},
+    ]);
+    await Promise.all([transProduct, transFeatures, transStyles]).then(async (data) => {
+      const product = data[0][0];
+      const features = data[1];
+      const styles = data[2];
+
+      var obj = {};
+
+      obj.id = product.id;
+      obj.name = product.name;
+      obj.slogan = product.slogan;
+      obj.description = product.description;
+      obj.category = product.category;
+      obj.default_price = product.default_price;
+      obj.features = features;
+      obj.styles = [];
+
+      const styleStart = data[2][0] ? data[2][0].style_id : null;
+      const styleEnd = styleStart + data[2].length;
+
+      if (styleStart) {
+        for (var j = 0; j < styles.length; j ++) {
+
+          var style = {};
+
+          style.style_id=styles[j]['style_id'];
+          style.productId=styles[j]['productId'];
+          style.name=styles[j]['name'];
+          style.sale_price=styles[j]['sale_price'];
+          style.original_price=styles[j]['original_price'];
+          style["default?"]=styles[j]['default?']
+          style.photos=[];
+          style.skus={};
+
+          const transPhotos = await db.CSVPhotos.aggregate([
+            { $match: {styleId : styles[j].style_id}},
+            { $sort: {id: 1}},
+            { $project: { '_id': 0, 'id': 0, '__v': 0, 'styleId': 0}},
+          ]);
+
+          const transSkus = await db.CSVSkus.aggregate([
+            { $match: {styleId : styles[j].style_id}},
+            { $sort: {id: 1}},
+            { $project: { '_id': 0, '__v': 0, 'styleId': 0}},
+          ]);
+
+          await Promise.all([transPhotos, transSkus]).then((data) => {
+            const photos = data[0];
+            const skus = data[1];
+
+            skus.forEach((sku) => {
+              style.skus[sku.id] = {
+                size: sku.size,
+                quantity: sku.quantity
+              }
+            });
+
+            photos.forEach((photo) => {
+              style.photos.push(photo);
+            });
+          })
+
+          obj.styles.push(style);
+        }
+      }
+      db.finalProducts.create({
+        id: obj.id,
+        name: obj.name,
+        slogan: obj.slogan,
+        description: obj.description,
+        category: obj.category,
+        default_price: obj.default_price || null,
+        features: obj.features.length ? obj.features : [],
+        styles: obj.styles.length? obj.styles : [],
+      })
+    })
+  }
+
+  res.sendStatus(200);
 })
 
 var port = process.env.PORT || 3000;
