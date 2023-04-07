@@ -9,6 +9,8 @@ let app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
+// app.use(express.static('./public'));
+
 app.get('/products', (req, res) => {
   db.list(req.query.page, req.query.count)
     .then((data) => {
@@ -51,6 +53,10 @@ app.get('/products/:product_id/related', (req, res) => {
     .catch((err) => {
       res.status(401).send(err);
     });
+})
+
+app.get('/loaderio-70ec821dabdbed8748a74947111bb745*', (req, res) => {
+  res.send('loaderio-70ec821dabdbed8748a74947111bb745');
 })
 
 
