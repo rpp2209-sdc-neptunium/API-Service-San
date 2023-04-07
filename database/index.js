@@ -1,6 +1,6 @@
 require("dotenv").config();
 const mongoose = require('mongoose');
-mongoose.connect(`mongodb://34.217.211.169/${process.env.DB_NAME}`);
+mongoose.connect(`mongodb://${process.env.DB_NAME}`);
 
 //id,name,slogan,description,category,default_price
 // let csvProductSchema = mongoose.Schema({
