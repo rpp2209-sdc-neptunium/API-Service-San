@@ -53,6 +53,10 @@ app.get('/products/:product_id/related', (req, res) => {
     });
 })
 
+app.get('loaderio-d5df1333bdfb869fca3cfdeacaa97428', (req, res) => {
+  res.status(200).send('loaderio-d5df1333bdfb869fca3cfdeacaa97428');
+})
+
 var port = process.env.PORT || 3000;
 app.listen(port, err => {
   if (err)
